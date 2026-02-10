@@ -1,0 +1,94 @@
+#!/bin/bash
+# OpenCode Notification Script - 方案D 混合自适应型
+# 使用 base64 编码解决中文传递问题
+# GitHub: https://github.com/xxx/wsl-ai-notify
+
+# Default values
+TYPE="info"
+TITLE=""
+MESSAGE=""
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --type=*)
+            TYPE="${1#*=}"
+            shift
+            ;;
+        --type)
+            TYPE="$2"
+            shift 2
+            ;;
+        -*)
+            shift
+            ;;
+        *)
+            if [[ -z "$TITLE" ]]; then
+                TITLE="$1"
+            elif [[ -z "$MESSAGE" ]]; then
+                MESSAGE="$1"
+            fi
+            shift
+            ;;
+    esac
+done
+
+# Get context
+PROJECT=$(basename "$PWD" 2>/dev/null || echo "?")
+TIMESTAMP=$(date +%H:%M:%S)
+
+# Determine emoji based on type
+case $TYPE in
+    done|complete|finished|success)
+        EMOJI="✅"
+        ;;
+    waiting|input|confirm|question)
+        EMOJI="⏳"
+        ;;
+    error|fail|failed)
+        EMOJI="❌"
+        ;;
+    warning|warn)
+        EMOJI="⚠️"
+        ;;
+    info|*)
+        EMOJI="💡"
+        ;;
+esac
+
+# Build title and message
+FULL_TITLE="$EMOJI [$PROJECT]"
+
+if [[ -n "$MESSAGE" ]]; then
+    FULL_MESSAGE="$MESSAGE"$'\n'"$TIMESTAMP"
+else
+    FULL_MESSAGE="$TIMESTAMP"
+fi
+
+# Base64 encode to handle Chinese characters
+TITLE_B64=$(echo -n "$FULL_TITLE" | base64)
+MESSAGE_B64=$(echo -n "$FULL_MESSAGE" | base64)
+
+# Protocol launch args
+LAUNCH_ARGS="wslfocus://${PROJECT}"
+
+# Send notification
+powershell.exe -NoProfile -Command "
+[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
+
+\$titleBytes = [System.Convert]::FromBase64String('$TITLE_B64')
+\$title = [System.Text.Encoding]::UTF8.GetString(\$titleBytes)
+\$msgBytes = [System.Convert]::FromBase64String('$MESSAGE_B64')
+\$msg = [System.Text.Encoding]::UTF8.GetString(\$msgBytes)
+
+\$title = \$title -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;'
+\$msg = \$msg -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;'
+
+\$template = '<toast duration=\"long\" activationType=\"protocol\" launch=\"$LAUNCH_ARGS\"><visual><binding template=\"ToastText02\"><text id=\"1\">' + \$title + '</text><text id=\"2\">' + \$msg + '</text></binding></visual></toast>'
+
+\$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
+\$xml.LoadXml(\$template)
+\$toast = New-Object Windows.UI.Notifications.ToastNotification \$xml
+[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('OpenCode').Show(\$toast)
+" 2>/dev/null

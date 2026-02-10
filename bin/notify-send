@@ -1,0 +1,36 @@
+#!/bin/bash
+# notify-send wrapper for AI CLI tools (OpenCode, Claude Code, etc.)
+# 自动根据内容推断通知类型
+
+TITLE="${1:-OpenCode}"
+MESSAGE="${2:-}"
+
+# 智能推断类型
+infer_type() {
+    local content="$1"
+    
+    if echo "$content" | grep -qiE "完成|finished|complete|done|success|成功"; then
+        echo "done"
+        return
+    fi
+    
+    if echo "$content" | grep -qiE "错误|error|fail|失败|failed"; then
+        echo "error"
+        return
+    fi
+    
+    if echo "$content" | grep -qiE "等待|waiting|input|confirm|需要|waiting for"; then
+        echo "waiting"
+        return
+    fi
+    
+    echo "info"
+}
+
+if [[ -n "$MESSAGE" ]]; then
+    TYPE=$(infer_type "$TITLE $MESSAGE")
+else
+    TYPE=$(infer_type "$TITLE")
+fi
+
+~/.local/bin/notify --type="$TYPE" "$TITLE" "$MESSAGE"

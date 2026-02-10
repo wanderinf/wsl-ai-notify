@@ -1,0 +1,12 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\wslfocus]
+@="URL:WSL Focus Protocol"
+"URL Protocol"=""
+
+[HKEY_CLASSES_ROOT\wslfocus\shell]
+
+[HKEY_CLASSES_ROOT\wslfocus\shell\open]
+
+[HKEY_CLASSES_ROOT\wslfocus\shell\open\command]
+@="wscript.exe \"%USERPROFILE%\\.local\\bin\\focus-terminal.vbs\""
