@@ -1,48 +1,89 @@
 # WSL AI Notify
 
-为 WSL 中的 AI CLI 工具提供 Windows 原生通知。
+> Windows Toast notifications for AI CLI tools in WSL2
 
-## 功能
+[![Install](https://img.shields.io/badge/Install-curl%20%7C%20bash-blue)](#installation)
+[![License](https://img.shields.io/badge/License-MIT-green)](#license)
+[![WSL2](https://img.shields.io/badge/Platform-WSL2-orange)](#prerequisites)
 
-- ✅ Windows Toast 通知（支持中文）
-- ✅ 点击通知自动跳转到终端
-- ✅ 智能推断通知类型（完成/等待/错误）
-- ✅ 显示项目名、终端、时间戳
-- ✅ 支持 OpenCode、Claude Code 等所有 AI CLI 工具
+## Features
 
-## 安装
+| Feature | Description |
+|---------|-------------|
+| 🔔 **Toast Notifications** | Native Windows notifications |
+| 🖱️ **Click to Focus** | Click notification to bring terminal to front |
+| 🏷️ **Smart Types** | Auto-detect done/waiting/error from content |
+| 🌐 **Chinese Support** | Full Unicode/Chinese character support |
+| 🔌 **Universal** | Works with OpenCode, Claude Code, Cursor, etc. |
+
+## Prerequisites
+
+- WSL2 (Windows Subsystem for Linux)
+- Windows Terminal (recommended)
+- `curl` and `unzip` installed
 
 ```bash
-# 一键安装
+# Verify WSL2
+cat /proc/sys/fs/binfmt_misc/WSLInterop && echo "✓ WSL2"
+```
+
+## Installation
+
+### Quick Install
+
+```bash
 curl -fsSL https://raw.githubusercontent.com/wanderinf/wsl-ai-notify/main/install.sh | bash
 ```
 
-安装完成后：
-1. 双击 `C:\Users\{你的用户名}\wsl-notify.reg` 导入注册表
-2. 重启终端
+### Post-Install Step
 
-## 使用
+After installation, **import the registry file**:
 
-### 命令行
+1. Open Windows Explorer
+2. Navigate to `C:\Users\{your-username}\`
+3. Double-click `wsl-notify.reg`
+4. Click "Yes" to import
+
+### Verify
 
 ```bash
-# 基础用法
-notify "标题" "消息内容"
-
-# 指定类型
-notify --type=done "任务完成" "生成登录页面"
-notify --type=waiting "等待输入" "需要确认"
-notify --type=error "错误" "构建失败"
-
-# notify-send 兼容（自动推断类型）
-notify-send "任务完成" "3 files changed"
+notify --type=done "WSL AI Notify" "Installation complete!"
 ```
 
-### AI CLI 工具自动通知
+You should see a Windows toast notification.
 
-#### OpenCode / oh-my-opencode
+## Usage
 
-在 `~/.config/opencode/oh-my-opencode.json` 中启用：
+### Command Line
+
+```bash
+# Basic usage
+notify "Title" "Message"
+
+# Specify notification type
+notify --type=done "Complete" "Generated login page · 3 files"
+notify --type=waiting "Input Needed" "Please confirm the action"
+notify --type=error "Error" "Build failed · 3/15 tests"
+
+# notify-send compatible (auto type detection)
+notify-send "Task complete" "3 files changed"
+```
+
+### Notification Types
+
+| Type | Emoji | Trigger Keywords |
+|------|:-----:|------------------|
+| `done` | ✅ | 完成, finished, complete, done, success, 成功 |
+| `waiting` | ⏳ | 等待, waiting, input, confirm, 需要, waiting for |
+| `error` | ❌ | 错误, error, fail, 失败, failed |
+| `warning` | ⚠️ | warning, warn |
+| `info` | 💡 | (default) |
+
+## AI CLI Tool Configuration
+
+### OpenCode / oh-my-opencode
+
+Edit `~/.config/opencode/oh-my-opencode.json`:
 
 ```json
 {
@@ -52,57 +93,114 @@ notify-send "任务完成" "3 files changed"
 }
 ```
 
-#### Claude Code
-
-Claude Code 会自动调用 `notify-send`，无需额外配置。
-
-## 通知类型
-
-| 类型 | Emoji | 触发关键词 |
-|------|-------|-----------|
-| done | ✅ | 完成, finished, complete, success |
-| waiting | ⏳ | 等待, waiting, input, confirm |
-| error | ❌ | 错误, error, fail, failed |
-| warning | ⚠️ | warning, warn |
-| info | 💡 | 默认 |
-
-## 手动安装
-
-如果一键安装失败，可以手动安装：
-
+Or use jq:
 ```bash
-# 1. 下载脚本
-mkdir -p ~/.local/bin
-curl -fsSL https://raw.githubusercontent.com/wanderinf/wsl-ai-notify/main/bin/notify -o ~/.local/bin/notify
-curl -fsSL https://raw.githubusercontent.com/wanderinf/wsl-ai-notify/main/bin/notify-send -o ~/.local/bin/notify-send
-chmod +x ~/.local/bin/notify ~/.local/bin/notify-send
-
-# 2. 下载 nircmd 到 Windows
-curl -sL "https://www.nirsoft.net/utils/nircmd-x64.zip" -o /tmp/nircmd.zip
-unzip /tmp/nircmd.zip -d /tmp/nircmd
-WIN_USER=$(cmd.exe /c "echo %USERNAME%" | tr -d '\r')
-cp /tmp/nircmd/nircmd.exe "/mnt/c/Users/$WIN_USER/.local/bin/"
-
-# 3. 创建 VBScript 和注册表（见 install.sh）
-
-# 4. 导入注册表
-# 双击 C:\Users\{用户名}\wsl-notify.reg
+jq '.notification.force_enable = true' ~/.config/opencode/oh-my-opencode.json > /tmp/oc.json && mv /tmp/oc.json ~/.config/opencode/oh-my-opencode.json
 ```
 
-## 卸载
+### Claude Code / Cursor CLI
+
+No configuration required. These tools automatically call `notify-send`.
+
+## How It Works
+
+```
+AI CLI Tool (OpenCode/Claude Code)
+        │
+        ▼ calls notify-send
+  ~/.local/bin/notify-send
+        │
+        ▼ smart type detection
+  ~/.local/bin/notify
+        │
+        ▼ PowerShell Toast API
+  Windows Notification Center
+        │
+        ▼ user clicks notification
+  wslfocus:// protocol
+        │
+        ▼
+  nircmd activates Windows Terminal
+```
+
+## Project Structure
+
+```
+wsl-ai-notify/
+├── AGENTS.md              # AI agent installation guide
+├── README.md              # This file
+├── install.sh             # One-click installer
+├── bin/
+│   ├── notify             # Main notification script
+│   └── notify-send        # Compatibility wrapper
+└── windows/
+    ├── focus-terminal.vbs # Click handler (VBScript)
+    └── wsl-notify.reg     # Protocol registration
+```
+
+## Troubleshooting
+
+<details>
+<summary>Notification not showing</summary>
 
 ```bash
+# Check PATH
+which notify notify-send
+
+# Test PowerShell directly
+powershell.exe -Command "Write-Host 'PowerShell OK'"
+
+# Check if scripts are executable
+ls -la ~/.local/bin/notify*
+```
+</details>
+
+<details>
+<summary>Click doesn't focus terminal</summary>
+
+1. Verify registry was imported: Open `regedit` and check `HKEY_CLASSES_ROOT\wslfocus`
+2. Verify nircmd exists:
+   ```bash
+   ls /mnt/c/Users/*/.local/bin/nircmd.exe
+   ```
+3. Test manually:
+   ```cmd
+   C:\Users\{user}\.local\bin\nircmd.exe win activate process "WindowsTerminal.exe"
+   ```
+</details>
+
+<details>
+<summary>Chinese characters garbled</summary>
+
+The scripts use base64 encoding for Unicode support. Test:
+```bash
+echo "测试中文" | base64
+```
+</details>
+
+## Uninstall
+
+```bash
+# Remove scripts
 rm -f ~/.local/bin/notify ~/.local/bin/notify-send
-# 删除注册表项: HKEY_CLASSES_ROOT\wslfocus
-# 删除 C:\Users\{用户名}\.local\bin\nircmd.exe
-# 删除 C:\Users\{用户名}\.local\bin\focus-terminal.vbs
+
+# Remove PATH addition from ~/.bashrc (optional)
+# sed -i '/export PATH="\$HOME\/.local\/bin/d' ~/.bashrc
+
+# Windows cleanup (manual):
+# - Delete HKEY_CLASSES_ROOT\wslfocus in regedit
+# - Delete C:\Users\{user}\.local\bin\nircmd.exe
+# - Delete C:\Users\{user}\.local\bin\focus-terminal.vbs
 ```
 
-## 支持的终端
+## For AI Agents
 
-- Windows Terminal ✅
-- 其他终端可能需要修改 `focus-terminal.vbs`
+If you're an AI agent installing this for a user, see [AGENTS.md](./AGENTS.md) for step-by-step instructions optimized for automated installation.
 
 ## License
 
 MIT
+
+---
+
+**Made with ❤️ for WSL + AI CLI users**
