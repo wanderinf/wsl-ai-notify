@@ -6,7 +6,7 @@
 # 支持：OpenCode, Claude Code, Cursor CLI, 等等
 #
 # 使用：
-#   curl -fsSL https://raw.githubusercontent.com/xxx/wsl-ai-notify/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/wanderinf/wsl-ai-notify/main/install.sh | bash
 #
 
 set -e

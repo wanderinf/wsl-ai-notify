@@ -14,7 +14,7 @@
 
 ```bash
 # 一键安装
-curl -fsSL https://raw.githubusercontent.com/xxx/wsl-ai-notify/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/wanderinf/wsl-ai-notify/main/install.sh | bash
 ```
 
 安装完成后：
@@ -73,8 +73,8 @@ Claude Code 会自动调用 `notify-send`，无需额外配置。
 ```bash
 # 1. 下载脚本
 mkdir -p ~/.local/bin
-curl -fsSL https://raw.githubusercontent.com/xxx/wsl-ai-notify/main/bin/notify -o ~/.local/bin/notify
-curl -fsSL https://raw.githubusercontent.com/xxx/wsl-ai-notify/main/bin/notify-send -o ~/.local/bin/notify-send
+curl -fsSL https://raw.githubusercontent.com/wanderinf/wsl-ai-notify/main/bin/notify -o ~/.local/bin/notify
+curl -fsSL https://raw.githubusercontent.com/wanderinf/wsl-ai-notify/main/bin/notify-send -o ~/.local/bin/notify-send
 chmod +x ~/.local/bin/notify ~/.local/bin/notify-send
 
 # 2. 下载 nircmd 到 Windows

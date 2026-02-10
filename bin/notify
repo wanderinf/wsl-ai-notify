@@ -1,7 +1,7 @@
 #!/bin/bash
 # OpenCode Notification Script - 方案D 混合自适应型
 # 使用 base64 编码解决中文传递问题
-# GitHub: https://github.com/xxx/wsl-ai-notify
+# GitHub: https://github.com/wanderinf/wsl-ai-notify
 
 # Default values
 TYPE="info"
