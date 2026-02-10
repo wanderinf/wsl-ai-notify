@@ -44,7 +44,60 @@ Action: Double-click to import
 If automating, inform user:
 > "Please open Windows Explorer and double-click the file `wsl-notify.reg` in your user folder to complete installation."
 
-### Step 3: Verify Installation
+### Step 3: Configure AI CLI Tools
+
+#### For OpenCode / oh-my-opencode
+
+```bash
+# Check if oh-my-opencode is installed
+if [[ -f ~/.config/opencode/oh-my-opencode.json ]]; then
+    # Enable notifications
+    jq '.notification.force_enable = true' ~/.config/opencode/oh-my-opencode.json > /tmp/oc.json && mv /tmp/oc.json ~/.config/opencode/oh-my-opencode.json
+    echo "OpenCode notifications enabled ✓"
+fi
+```
+
+#### For Claude Code
+
+Add hooks to `~/.claude/settings.json`:
+
+```bash
+# Check if Claude Code settings exist
+if [[ -f ~/.claude/settings.json ]]; then
+    # Add hooks configuration
+    # Note: This requires manual JSON editing or jq expertise
+    echo "Add the following to ~/.claude/settings.json under 'hooks':"
+    echo '
+{
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.local/bin/notify-send '"'"'Claude Code'"'"' '"'"'Waiting for your input'"'"'",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.local/bin/notify-send '"'"'Claude Code'"'"' '"'"'Task complete'"'"'",
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}'
+fi
+```
+
+### Step 4: Verify Installation
 
 ```bash
 # Test notification
@@ -53,12 +106,48 @@ If automating, inform user:
 # Test click-to-focus (minimize terminal first, then click notification)
 ```
 
-## Configuration for AI CLI Tools
+## Hook Configuration Details
+
+### Claude Code Hooks
+
+| Hook | Trigger | Recommended Message |
+|------|---------|---------------------|
+| `Notification` | Waiting for user input | "Waiting for your input" |
+| `Stop` | Agent finished responding | "Task complete" |
+
+Full configuration example:
+```json
+{
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.local/bin/notify-send 'Claude Code' 'Waiting for your input'",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.local/bin/notify-send 'Claude Code' 'Task complete'",
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}
+```
 
 ### OpenCode / oh-my-opencode
 
-Add to `~/.config/opencode/oh-my-opencode.json`:
-
+Simply add to config:
 ```json
 {
   "notification": {
@@ -66,15 +155,6 @@ Add to `~/.config/opencode/oh-my-opencode.json`:
   }
 }
 ```
-
-Or use jq:
-```bash
-jq '.notification.force_enable = true' ~/.config/opencode/oh-my-opencode.json > /tmp/config.json && mv /tmp/config.json ~/.config/opencode/oh-my-opencode.json
-```
-
-### Claude Code
-
-No configuration needed. Claude Code automatically uses `notify-send`.
 
 ## Usage Examples
 
@@ -118,6 +198,12 @@ powershell.exe -Command "[Windows.UI.Notifications.ToastNotificationManager, Win
 1. Verify registry was imported: Check `HKEY_CLASSES_ROOT\wslfocus` in regedit
 2. Verify nircmd exists: `ls /mnt/c/Users/*/\.local/bin/nircmd.exe`
 
+### Claude Code notifications not working
+
+1. Check hooks configuration in `~/.claude/settings.json`
+2. Verify notify-send path: `which notify-send`
+3. Test manually: `~/.local/bin/notify-send "Test" "Message"`
+
 ### Chinese characters garbled
 
 The scripts use base64 encoding. If issues persist:
@@ -155,8 +241,10 @@ Install wsl-ai-notify for Windows notifications in WSL:
 
 1. Run: curl -fsSL https://raw.githubusercontent.com/wanderinf/wsl-ai-notify/main/install.sh | bash
 2. Ask user to double-click C:\Users\{username}\wsl-notify.reg
-3. Test: notify --type=done "Test" "Working!"
 
-For OpenCode, also add to ~/.config/opencode/oh-my-opencode.json:
+For OpenCode, add to ~/.config/opencode/oh-my-opencode.json:
 {"notification": {"force_enable": true}}
+
+For Claude Code, add hooks to ~/.claude/settings.json:
+{"hooks": {"Notification": [{"hooks": [{"type": "command", "command": "~/.local/bin/notify-send 'Claude Code' 'Waiting for input'", "async": true}]}]}, "Stop": [{"hooks": [{"type": "command", "command": "~/.local/bin/notify-send 'Claude Code' 'Task complete'", "async": true}]}]}}
 ```

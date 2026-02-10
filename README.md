@@ -98,9 +98,46 @@ Or use jq:
 jq '.notification.force_enable = true' ~/.config/opencode/oh-my-opencode.json > /tmp/oc.json && mv /tmp/oc.json ~/.config/opencode/oh-my-opencode.json
 ```
 
-### Claude Code / Cursor CLI
+### Claude Code
 
-No configuration required. These tools automatically call `notify-send`.
+Edit `~/.claude/settings.json` and add hooks:
+
+```json
+{
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.local/bin/notify-send 'Claude Code' 'Waiting for your input'",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.local/bin/notify-send 'Claude Code' 'Task complete'",
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Hook Types:**
+- `Notification` - Triggered when waiting for user input
+- `Stop` - Triggered when agent finishes responding
+
+### Cursor CLI / Other Tools
+
+No configuration required if they use `notify-send`.
 
 ## How It Works
 
@@ -166,6 +203,17 @@ ls -la ~/.local/bin/notify*
 3. Test manually:
    ```cmd
    C:\Users\{user}\.local\bin\nircmd.exe win activate process "WindowsTerminal.exe"
+   ```
+</details>
+
+<details>
+<summary>Claude Code not showing notifications</summary>
+
+1. Verify hooks are configured in `~/.claude/settings.json`
+2. Check hook syntax matches the schema
+3. Test manually:
+   ```bash
+   ~/.local/bin/notify-send "Claude Code" "Test"
    ```
 </details>
 
