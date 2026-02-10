@@ -1,9 +1,10 @@
 #!/bin/bash
-# OpenCode Notification Script - 方案D 混合自适应型
+# WSL AI Notify - 通知脚本
 # 使用 base64 编码解决中文传递问题
 
 # Default values
 TYPE="info"
+APP_NAME="AI Notify"
 TITLE=""
 MESSAGE=""
 
@@ -16,6 +17,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --type)
             TYPE="$2"
+            shift 2
+            ;;
+        --app=*)
+            APP_NAME="${1#*=}"
+            shift
+            ;;
+        --app)
+            APP_NAME="$2"
             shift 2
             ;;
         -*)
@@ -55,18 +64,20 @@ case $TYPE in
         ;;
 esac
 
-# Build title and message
-FULL_TITLE="$EMOJI [$PROJECT]"
+# Build title: "✅ [project] 任务完成"
+FULL_TITLE="$EMOJI [$PROJECT] $TITLE"
 
+# Build message with timestamp
 if [[ -n "$MESSAGE" ]]; then
     FULL_MESSAGE="$MESSAGE"$'\n'"$TIMESTAMP"
 else
     FULL_MESSAGE="$TIMESTAMP"
 fi
 
-# Base64 encode to handle Chinese characters
+# Base64 encode
 TITLE_B64=$(echo -n "$FULL_TITLE" | base64)
 MESSAGE_B64=$(echo -n "$FULL_MESSAGE" | base64)
+APP_NAME_B64=$(echo -n "$APP_NAME" | base64)
 
 # Protocol launch args
 LAUNCH_ARGS="wslfocus://${PROJECT}"
@@ -76,20 +87,21 @@ powershell.exe -NoProfile -Command "
 [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
 [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
 
-# Decode base64
 \$titleBytes = [System.Convert]::FromBase64String('$TITLE_B64')
 \$title = [System.Text.Encoding]::UTF8.GetString(\$titleBytes)
 \$msgBytes = [System.Convert]::FromBase64String('$MESSAGE_B64')
 \$msg = [System.Text.Encoding]::UTF8.GetString(\$msgBytes)
+\$appBytes = [System.Convert]::FromBase64String('$APP_NAME_B64')
+\$appName = [System.Text.Encoding]::UTF8.GetString(\$appBytes)
 
-# Escape XML special chars after decoding
 \$title = \$title -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;'
 \$msg = \$msg -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;'
+\$appName = \$appName -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;'
 
 \$template = '<toast duration=\"long\" activationType=\"protocol\" launch=\"$LAUNCH_ARGS\"><visual><binding template=\"ToastText02\"><text id=\"1\">' + \$title + '</text><text id=\"2\">' + \$msg + '</text></binding></visual></toast>'
 
 \$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
 \$xml.LoadXml(\$template)
 \$toast = New-Object Windows.UI.Notifications.ToastNotification \$xml
-[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('AI Notify').Show(\$toast)
+[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier(\$appName).Show(\$toast)
 " 2>/dev/null

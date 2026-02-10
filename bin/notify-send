@@ -1,8 +1,8 @@
 #!/bin/bash
-# notify-send wrapper for AI CLI tools (OpenCode, Claude Code, etc.)
+# notify-send wrapper for AI CLI tools
 # 自动根据内容推断通知类型
 
-TITLE="${1:-OpenCode}"
+TITLE="${1:-AI Notify}"
 MESSAGE="${2:-}"
 
 # 智能推断类型
@@ -27,10 +27,12 @@ infer_type() {
     echo "info"
 }
 
+# 获取类型
 if [[ -n "$MESSAGE" ]]; then
     TYPE=$(infer_type "$TITLE $MESSAGE")
 else
     TYPE=$(infer_type "$TITLE")
 fi
 
-~/.local/bin/notify --type="$TYPE" "$TITLE" "$MESSAGE"
+# 调用 notify，把 TITLE 作为 app 名称
+~/.local/bin/notify --app="$TITLE" --type="$TYPE" "$MESSAGE"
