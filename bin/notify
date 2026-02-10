@@ -1,7 +1,6 @@
 #!/bin/bash
 # OpenCode Notification Script - 方案D 混合自适应型
 # 使用 base64 编码解决中文传递问题
-# GitHub: https://github.com/wanderinf/wsl-ai-notify
 
 # Default values
 TYPE="info"
@@ -77,11 +76,13 @@ powershell.exe -NoProfile -Command "
 [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
 [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
 
+# Decode base64
 \$titleBytes = [System.Convert]::FromBase64String('$TITLE_B64')
 \$title = [System.Text.Encoding]::UTF8.GetString(\$titleBytes)
 \$msgBytes = [System.Convert]::FromBase64String('$MESSAGE_B64')
 \$msg = [System.Text.Encoding]::UTF8.GetString(\$msgBytes)
 
+# Escape XML special chars after decoding
 \$title = \$title -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;'
 \$msg = \$msg -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;'
 
@@ -90,5 +91,5 @@ powershell.exe -NoProfile -Command "
 \$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
 \$xml.LoadXml(\$template)
 \$toast = New-Object Windows.UI.Notifications.ToastNotification \$xml
-[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('OpenCode').Show(\$toast)
+[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('AI Notify').Show(\$toast)
 " 2>/dev/null
