@@ -1,2 +1,3 @@
 Set objShell = CreateObject("WScript.Shell")
-objShell.Run "nircmd.exe win activate process ""WindowsTerminal.exe""", 0, False
+' 调用 PowerShell 脚本，保留窗口最大化状态
+objShell.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -File """ & CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName) & "\focus-terminal.ps1""", 0, False
