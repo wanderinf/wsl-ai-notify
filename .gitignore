@@ -10,3 +10,6 @@ Thumbs.db
 # Temp files
 *.tmp
 *.log
+
+# Sisyphus AI notes
+.sisyphus/
